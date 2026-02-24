@@ -46,7 +46,7 @@ public class EventService {
         }
     }
 
-    public void collectSensorEvent(BaseSensorEvent event) {
+    public void collectSensorEvent(SensorEvent event) {
         SensorEventAvro sensorEventAvro = convertToAvro(event);
         ProducerRecord<String, SensorEventAvro> record = new ProducerRecord<>(
             sensorsTopic,
@@ -56,7 +56,7 @@ public class EventService {
         producer.send(record);
     }
 
-    private SensorEventAvro convertToAvro(BaseSensorEvent event) {
+    private SensorEventAvro convertToAvro(SensorEvent event) {
         long timestamp = event.getTimestamp() != null 
             ? event.getTimestamp().toEpochMilli() 
             : Instant.now().toEpochMilli();
@@ -71,7 +71,7 @@ public class EventService {
             .build();
     }
 
-    private Object createPayload(BaseSensorEvent event) {
+    private Object createPayload(SensorEvent event) {
         if (event instanceof ClimateSensorEvent) {
             ClimateSensorEvent climateEvent = (ClimateSensorEvent) event;
             return ClimateSensorAvro.newBuilder()

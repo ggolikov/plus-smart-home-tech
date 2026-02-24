@@ -2,7 +2,7 @@ package ru.yandex.practicum.telemetry.collector.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.telemetry.collector.model.BaseSensorEvent;
+import ru.yandex.practicum.telemetry.collector.model.SensorEvent;
 import ru.yandex.practicum.telemetry.collector.service.EventService;
 
 @RestController
@@ -16,7 +16,7 @@ public class EventController {
     }
 
     @PostMapping("/sensors")
-    public ResponseEntity<Void> collectSensorEvent(@RequestBody BaseSensorEvent event) {
+    public ResponseEntity<Void> collectSensorEvent(@RequestBody SensorEvent event) {
         eventService.collectSensorEvent(event);
         return ResponseEntity.ok().build();
     }
