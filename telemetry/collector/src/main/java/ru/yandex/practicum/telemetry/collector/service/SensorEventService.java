@@ -6,9 +6,9 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.collector.model.*;
 import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
-import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -17,7 +17,7 @@ import java.time.Instant;
 import java.util.Properties;
 
 @Service
-public class EventService {
+public class SensorEventService {
 
     @Value("${kafka.bootstrap.servers:localhost:9092}")
     private String bootstrapServers;
@@ -57,9 +57,9 @@ public class EventService {
     }
 
     private SensorEventAvro convertToAvro(SensorEvent event) {
-        long timestamp = event.getTimestamp() != null 
-            ? event.getTimestamp().toEpochMilli() 
-            : Instant.now().toEpochMilli();
+        Instant timestamp = event.getTimestamp() != null
+            ? event.getTimestamp()
+            : Instant.now();
 
         Object payload = createPayload(event);
 
@@ -99,9 +99,9 @@ public class EventService {
                 .build();
         } else if (event instanceof TemperatureSensorEvent) {
             TemperatureSensorEvent tempEvent = (TemperatureSensorEvent) event;
-            long tempTimestamp = tempEvent.getTimestamp() != null 
-                ? tempEvent.getTimestamp().toEpochMilli() 
-                : Instant.now().toEpochMilli();
+            Instant tempTimestamp = tempEvent.getTimestamp() != null
+                ? tempEvent.getTimestamp()
+                : Instant.now();
             return TemperatureSensorAvro.newBuilder()
                 .setId(tempEvent.getId())
                 .setHubId(tempEvent.getHubId())

@@ -7,11 +7,14 @@ import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
+    private static final Logger log = LoggerFactory.getLogger(GeneralAvroSerializer.class);
     private final EncoderFactory encoderFactory;
     private BinaryEncoder encoder;
 
@@ -30,6 +33,8 @@ public class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
                 writer.write(data, encoder);
                 encoder.flush();
                 result = outputStream.toByteArray();
+            } else {
+                log.info("Serialized data: " + data);
             }
             return result;
         } catch (IOException e) {

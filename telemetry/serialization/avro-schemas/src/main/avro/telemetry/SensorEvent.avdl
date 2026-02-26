@@ -1,9 +1,6 @@
 @namespace("ru.yandex.practicum.kafka.telemetry.event")
 protocol SensorEventProtocol {
 
-    @logicalType("timestamp-millis")
-    typedef long timestamp_ms;
-
     record ClimateSensorAvro {
         int temperature_c;
         int humidity;
