@@ -1,5 +1,6 @@
 package ru.yandex.practicum.telemetry.collector.service;
 
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -7,6 +8,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.kafka.telemetry.event.*;
+import ru.yandex.practicum.telemetry.collector.client.KafkaClient;
 import ru.yandex.practicum.telemetry.collector.model.*;
 import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
 
@@ -18,42 +20,26 @@ import java.util.Properties;
 
 @Service
 public class SensorEventService {
-
-    @Value("${kafka.bootstrap.servers:localhost:9092}")
-    private String bootstrapServers;
-
     @Value("${kafka.topic.sensors:telemetry.sensors.v1}")
     private String sensorsTopic;
 
+    private final KafkaClient kafkaClient;
+
     private KafkaProducer<String, SensorEventAvro> producer;
 
-    @PostConstruct
-    public void init() {
-        Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class.getName());
-        props.put(ProducerConfig.ACKS_CONFIG, "all");
-        props.put(ProducerConfig.RETRIES_CONFIG, 3);
 
-        producer = new KafkaProducer<>(props);
-    }
-
-    @PreDestroy
-    public void close() {
-        if (producer != null) {
-            producer.close();
-        }
+    public SensorEventService(KafkaClient kafkaClient) {
+        this.kafkaClient = kafkaClient;
     }
 
     public void collectSensorEvent(SensorEvent event) {
         SensorEventAvro sensorEventAvro = convertToAvro(event);
-        ProducerRecord<String, SensorEventAvro> record = new ProducerRecord<>(
+        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
             sensorsTopic,
             event.getId(),
             sensorEventAvro
         );
-        producer.send(record);
+        kafkaClient.getProducer().send(record);
     }
 
     private SensorEventAvro convertToAvro(SensorEvent event) {

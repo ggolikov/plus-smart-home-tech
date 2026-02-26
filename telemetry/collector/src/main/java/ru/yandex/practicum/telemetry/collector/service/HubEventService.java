@@ -1,11 +1,13 @@
 package ru.yandex.practicum.telemetry.collector.service;
 
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.telemetry.collector.client.KafkaClient;
 import ru.yandex.practicum.telemetry.collector.model.*;
 import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
 import ru.yandex.practicum.kafka.telemetry.event.*;
@@ -20,42 +22,23 @@ import java.util.stream.Collectors;
 
 @Service
 public class HubEventService {
-
-    @Value("${kafka.bootstrap.servers:localhost:9092}")
-    private String bootstrapServers;
-
     @Value("${kafka.topic.hubs:telemetry.hubs.v1}")
     private String hubsTopic;
 
-    private KafkaProducer<String, HubEventAvro> producer;
+    private final KafkaClient kafkaClient;
 
-    @PostConstruct
-    public void init() {
-        Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class.getName());
-        props.put(ProducerConfig.ACKS_CONFIG, "all");
-        props.put(ProducerConfig.RETRIES_CONFIG, 3);
-
-        producer = new KafkaProducer<>(props);
-    }
-
-    @PreDestroy
-    public void close() {
-        if (producer != null) {
-            producer.close();
-        }
+    public HubEventService(KafkaClient kafkaClient) {
+        this.kafkaClient = kafkaClient;
     }
 
     public void collectHubEvent(HubEvent event) {
         HubEventAvro hubEventAvro = convertToAvro(event);
-        ProducerRecord<String, HubEventAvro> record = new ProducerRecord<>(
+        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
             hubsTopic,
             event.getHubId(),
             hubEventAvro
         );
-        producer.send(record);
+        kafkaClient.getProducer().send(record);
     }
 
     private HubEventAvro convertToAvro(HubEvent event) {
