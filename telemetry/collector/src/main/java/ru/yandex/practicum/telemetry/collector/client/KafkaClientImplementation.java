@@ -7,18 +7,17 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
-
 import java.util.Properties;
 
 public class KafkaClientImplementation implements KafkaClient, AutoCloseable {
-    @Value("collector.kafka.producer.properties.bootstrap-servers")
+    @Value("${collector.kafka.producer.properties.bootstrap-servers}")
     String bootstrapServers;
 
-    @Value("collector.kafka.producer.properties.acks")
+    @Value("${collector.kafka.producer.properties.acks}")
     String acks;
 
-    @Value("collector.kafka.producer.properties.retries")
-    String retries;
+    @Value("${collector.kafka.producer.properties.retries}")
+    Integer retries;
 
     private Producer<String, SpecificRecordBase> producer;
 
