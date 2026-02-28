@@ -35,4 +35,6 @@ public abstract class SensorEvent {
 
     @NotNull
     public abstract SensorEventType getType();
+
+    public abstract Object extractPayload();
 } 

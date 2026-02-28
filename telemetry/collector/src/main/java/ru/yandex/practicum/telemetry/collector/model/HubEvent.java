@@ -36,4 +36,5 @@ public abstract class HubEvent {
     @Schema(description = "Тип события хаба")
     public abstract HubEventType getType();
 
+    public abstract Object extractPayload();
 }
