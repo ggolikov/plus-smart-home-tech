@@ -1,15 +1,11 @@
 package ru.yandex.practicum.telemetry.collector.client;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 
 @Configuration
 public class KafkaClientConfiguration {
-    @Bean
-    @Scope("prototype")
     public static KafkaClient initClient() {
-        return new KafkaClientImplementation();
+        return new KafkaClientImplementation(new KafkaProperties());
     }
 
     private final KafkaClient kafkaClient;
