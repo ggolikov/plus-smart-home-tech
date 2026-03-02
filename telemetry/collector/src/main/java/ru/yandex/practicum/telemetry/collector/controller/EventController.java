@@ -1,16 +1,15 @@
 package ru.yandex.practicum.telemetry.collector.controller;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.telemetry.collector.model.HubEvent;
-import ru.yandex.practicum.telemetry.collector.model.SensorEvent;
+import com.google.protobuf.Empty;
+import io.grpc.stub.StreamObserver;
+import net.devh.boot.grpc.server.service.GrpcService;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.telemetry.collector.service.HubEventService;
 import ru.yandex.practicum.telemetry.collector.service.SensorEventService;
+import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
 
-@RestController
-@RequestMapping("/events")
-public class EventController {
-
+@GrpcService
+public class EventController extends CollectorControllerGrpc.CollectorControllerImplBase  {
     private final SensorEventService sensorEventService;
     private final HubEventService hubEventService;
 
@@ -19,15 +18,11 @@ public class EventController {
         this.hubEventService = hubEventService;
     }
 
-    @PostMapping("/sensors")
-    public ResponseEntity<Void> collectSensorEvent(@RequestBody SensorEvent event) {
-        sensorEventService.collectSensorEvent(event);
-        return ResponseEntity.ok().build();
+    public void collectSensorEvent(SensorEventProto event, StreamObserver<Empty> responseObserver) {
+        sensorEventService.collectSensorEvent(event, responseObserver);
     }
 
-    @PostMapping("/hubs")
-    public ResponseEntity<Void> collectHubEvent(@RequestBody HubEvent event) {
-        hubEventService.collectHubEvent(event);
-        return ResponseEntity.ok().build();
+    public void collectHubEvent(HubEventProto event, StreamObserver<Empty> responseObserver) {
+        hubEventService.collectHubEvent(event, responseObserver);
     }
 }
