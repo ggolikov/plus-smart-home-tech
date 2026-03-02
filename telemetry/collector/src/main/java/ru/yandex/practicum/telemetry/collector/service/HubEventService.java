@@ -1,11 +1,13 @@
 package ru.yandex.practicum.telemetry.collector.service;
 
+import com.google.protobuf.Empty;
+import io.grpc.stub.StreamObserver;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.telemetry.collector.client.KafkaClient;
-import ru.yandex.practicum.telemetry.collector.model.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.time.Instant;
@@ -21,24 +23,32 @@ public class HubEventService {
         this.kafkaClient = kafkaClient;
     }
 
-    public void collectHubEvent(HubEvent event) {
-        HubEventAvro hubEventAvro = convertToAvro(event);
-        Long timestamp = Instant.now().toEpochMilli();
+    public void collectHubEvent(HubEventProto event, StreamObserver<Empty> responseObserver) {
+        try {
 
-        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
-            hubsTopic,
-            null,
-                timestamp,
-                event.getHubId(),
-                hubEventAvro
-        );
-        kafkaClient.getProducer().send(record);
+            HubEventAvro hubEventAvro = convertToAvro(event);
+            Long timestamp = Instant.now().toEpochMilli();
+
+            ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
+                    hubsTopic,
+                    null,
+                    timestamp,
+                    event.getHubId(),
+                    hubEventAvro
+            );
+            kafkaClient.getProducer().send(record);
+
+            responseObserver.onNext(Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
     }
 
-    private HubEventAvro convertToAvro(HubEvent event) {
-        Instant timestamp = event.getTimestamp() != null 
-            ? event.getTimestamp() 
-            : Instant.now();
+    private HubEventAvro convertToAvro(HubEventProto event) {
+        Instant timestamp = event.getTimestamp() != null
+                ? Instant.ofEpochSecond(event.getTimestamp().getSeconds(), event.getTimestamp().getNanos())
+                : Instant.now();
 
         Object payload = createPayload(event);
 
@@ -49,7 +59,7 @@ public class HubEventService {
             .build();
     }
 
-    private Object createPayload(HubEvent event) {
-        return event.extractPayload();
+    private Object createPayload(HubEventProto event) {
+        return event.getPayloadCase();
     }
 }
