@@ -6,7 +6,7 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.collector.client.KafkaClient;
 
@@ -62,6 +62,56 @@ public class SensorEventService {
     }
 
     private Object createPayload(SensorEventProto event) {
-        return event.getPayloadCase();
+        SensorEventProto.PayloadCase payloadCase = event.getPayloadCase();
+        switch (payloadCase) {
+            case LIGHT_SENSOR -> {
+                LightSensorProto payload = event.getLightSensor();
+                LightSensorAvro avro = new LightSensorAvro();
+
+                avro.setLinkQuality(payload.getLinkQuality());
+
+                return avro;
+            }
+            case CLIMATE_SENSOR -> {
+                ClimateSensorProto payload = event.getClimateSensor();
+
+                ClimateSensorAvro avro = new ClimateSensorAvro();
+
+                avro.setTemperatureC(payload.getTemperatureC());
+                avro.setHumidity(payload.getHumidity());
+                avro.setCo2Level(payload.getCo2Level());
+
+                return avro;
+            }
+            case TEMPERATURE_SENSOR -> {
+                TemperatureSensorProto payload = event.getTemperatureSensor();
+
+                TemperatureSensorAvro avro = new TemperatureSensorAvro();
+                avro.setTemperatureC(payload.getTemperatureC());
+                avro.setTemperatureF(payload.getTemperatureF());
+
+                return avro;
+            }
+            case MOTION_SENSOR -> {
+                MotionSensorProto payload = event.getMotionSensor();
+
+                MotionSensorAvro avro = new MotionSensorAvro();
+                avro.setLinkQuality(payload.getLinkQuality());
+                avro.setMotion(payload.getMotion());
+                avro.setVoltage(payload.getVoltage());
+
+                return avro;
+            }
+            case SWITCH_SENSOR -> {
+                SwitchSensorProto payload = event.getSwitchSensor();
+
+                SwitchSensorAvro avro = new SwitchSensorAvro();
+
+                avro.setState(payload.getState());
+
+                return avro;
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + payloadCase);
+        }
     }
 }

@@ -11,4 +11,5 @@ public class KafkaConsumerProperties {
     private String bootstrapServers;
     private String groupId;
     private String incomingTopic;
+    private String outgoingTopic;
 }

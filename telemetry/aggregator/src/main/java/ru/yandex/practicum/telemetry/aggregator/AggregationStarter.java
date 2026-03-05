@@ -1,21 +1,23 @@
 package ru.yandex.practicum.telemetry.aggregator;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.aggregator.client.KafkaClient;
 import ru.yandex.practicum.telemetry.aggregator.client.KafkaClientImplementation;
 import ru.yandex.practicum.telemetry.aggregator.client.KafkaConsumerProperties;
-import ru.yandex.practicum.telemetry.aggregator.client.KafkaProducerProperties;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Класс AggregationStarter, ответственный за запуск агрегации данных.
@@ -23,7 +25,7 @@ import java.util.List;
 @Slf4j
 @Component
 @EnableConfigurationProperties(KafkaConsumerProperties.class)
-public class AggregationStarter {
+public class    AggregationStarter {
     private final KafkaConsumerProperties kafkaConsumerProperties;
     private KafkaClient kafkaClient;
     private Aggregator aggregator;
@@ -31,7 +33,7 @@ public class AggregationStarter {
     public AggregationStarter(KafkaConsumerProperties kafkaConsumerProperties) {
         this.kafkaConsumerProperties = kafkaConsumerProperties;
         this.kafkaClient = new KafkaClientImplementation();
-        this.aggregator = new Aggregator(kafkaClient);
+        this.aggregator = new Aggregator();
     }
 
     /**
@@ -41,14 +43,30 @@ public class AggregationStarter {
      */
     public void start() {
         try {
-            Consumer<String, SpecificRecordBase> consumer = kafkaClient.getConsumer();
+            Consumer<String, SensorEventAvro> consumer = kafkaClient.getConsumer();
             consumer.subscribe(List.of(kafkaConsumerProperties.getIncomingTopic()));
             Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
             while (true) {
-                ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
-                for (ConsumerRecord<String, SpecificRecordBase> record : records) {
-                    aggregator.handleEvent(record.value());
+                ConsumerRecords<String, SensorEventAvro> records = consumer.poll(Duration.ofMillis(100));
+                for (ConsumerRecord<String, SensorEventAvro> record : records) {
+                    Optional<SensorsSnapshotAvro> optionalSnapshot = aggregator.updateState(record.value());
+
+                    if (optionalSnapshot.isPresent()) {
+                        SensorsSnapshotAvro snapshotAvro = optionalSnapshot.get();
+                        String snapshotsTopic = kafkaConsumerProperties.getOutgoingTopic();
+                        Long timestamp = Instant.now().toEpochMilli();
+
+                        ProducerRecord<String, SensorsSnapshotAvro> snapshotRecord = new ProducerRecord<>(
+                                snapshotsTopic,
+                                null,
+                                timestamp,
+                                snapshotAvro.getHubId(),
+                                snapshotAvro
+                        );
+                        kafkaClient.getProducer().send(snapshotRecord);
+                    }
+
                 }
             }
 

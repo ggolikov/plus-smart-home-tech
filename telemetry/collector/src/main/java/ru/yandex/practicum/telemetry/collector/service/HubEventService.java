@@ -6,11 +6,12 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.*;
 import ru.yandex.practicum.telemetry.collector.client.KafkaClient;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
 
 @Service
 public class HubEventService {
@@ -59,6 +60,46 @@ public class HubEventService {
     }
 
     private Object createPayload(HubEventProto event) {
-        return event.getPayloadCase();
+        HubEventProto.PayloadCase payloadCase = event.getPayloadCase();
+        switch (payloadCase) {
+            case DEVICE_ADDED -> {
+                DeviceAddedEventProto payload = event.getDeviceAdded();
+                String _type =  payload.getType().getDescriptorForType().getFullName();
+
+                DeviceAddedEventAvro avro = new DeviceAddedEventAvro();
+
+                avro.setId(payload.getId());
+                avro.setType(DeviceTypeAvro.valueOf(_type));
+
+                return avro;
+            }
+            case DEVICE_REMOVED -> {
+                DeviceRemovedEventProto payload = event.getDeviceRemoved();
+                DeviceRemovedEventAvro avro = new DeviceRemovedEventAvro();
+
+                avro.setId(payload.getId());
+
+                return avro;
+            }
+            case SCENARIO_ADDED -> {
+                ScenarioAddedEventProto payload = event.getScenarioAdded();
+                ScenarioAddedEventAvro avro = new ScenarioAddedEventAvro();
+
+                avro.setName(payload.getName());
+                avro.setActions(new ArrayList<>());
+                avro.setConditions(new ArrayList<>());
+//                avro.setActions(payload.getActionList());
+//                avro.setConditions(payload.getConditionList());
+                return avro;
+            }
+            case SCENARIO_REMOVED -> {
+                ScenarioRemovedEventProto payload = event.getScenarioRemoved();
+                ScenarioRemovedEventAvro avro = new ScenarioRemovedEventAvro();
+                avro.setName(payload.getName());
+
+                return avro;
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + payloadCase);
+        }
     }
 }

@@ -13,6 +13,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.deserializer.SensorEventDeserializer;
 import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
+import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 
 import java.util.Properties;
 
@@ -21,8 +23,8 @@ import java.util.Properties;
 public class KafkaClientImplementation implements KafkaClient, AutoCloseable {
     private final KafkaProducerProperties kafkaProducerProperties;
     private final KafkaConsumerProperties kafkaConsumerProperties;
-    private Producer<String, SpecificRecordBase> producer;
-    private Consumer<String, SpecificRecordBase> consumer;
+    private Producer<String, SensorsSnapshotAvro> producer;
+    private Consumer<String, SensorEventAvro> consumer;
 
     public KafkaClientImplementation(KafkaProducerProperties kafkaProducerProperties, KafkaConsumerProperties kafkaConsumerProperties) {
         this.kafkaProducerProperties = kafkaProducerProperties;
@@ -35,7 +37,7 @@ public class KafkaClientImplementation implements KafkaClient, AutoCloseable {
     }
 
     @Override
-    public Producer<String, SpecificRecordBase> getProducer() {
+    public Producer<String, SensorsSnapshotAvro> getProducer() {
         if (producer == null) {
             initProducer();
         }
@@ -54,7 +56,7 @@ public class KafkaClientImplementation implements KafkaClient, AutoCloseable {
     }
 
     @Override
-    public Consumer<String, SpecificRecordBase> getConsumer() {
+    public Consumer<String, SensorEventAvro> getConsumer() {
         if (consumer == null) {
             initConsumer();
         }
