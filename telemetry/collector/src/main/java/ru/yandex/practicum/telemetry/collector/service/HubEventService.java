@@ -12,6 +12,7 @@ import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class HubEventService {
@@ -64,7 +65,8 @@ public class HubEventService {
         switch (payloadCase) {
             case DEVICE_ADDED -> {
                 DeviceAddedEventProto payload = event.getDeviceAdded();
-                String _type =  payload.getType().getDescriptorForType().getFullName();
+                DeviceTypeProto p = DeviceTypeProto.valueOf(payload.getTypeValue());
+                String _type =  p.toString();
 
                 DeviceAddedEventAvro avro = new DeviceAddedEventAvro();
 
@@ -86,10 +88,42 @@ public class HubEventService {
                 ScenarioAddedEventAvro avro = new ScenarioAddedEventAvro();
 
                 avro.setName(payload.getName());
-                avro.setActions(new ArrayList<>());
-                avro.setConditions(new ArrayList<>());
-//                avro.setActions(payload.getActionList());
-//                avro.setConditions(payload.getConditionList());
+                List<DeviceActionProto> protoActions = payload.getActionList();
+                List<DeviceActionAvro> avroActions = new ArrayList<>();
+
+                for (DeviceActionProto protoAction : protoActions) {
+                    DeviceActionAvro avroAction = new DeviceActionAvro();
+                    ActionTypeProto p = ActionTypeProto.valueOf(protoAction.getTypeValue());
+                    String _type =  p.toString();
+                    avroAction.setType(ActionTypeAvro.valueOf(_type));
+                    avroAction.setSensorId(protoAction.getSensorId());
+                    avroAction.setValue(protoAction.getValue());
+                    avroActions.add(avroAction);
+                }
+
+                avro.setActions(avroActions);
+
+                List<ScenarioConditionProto> protoConditions = payload.getConditionList();
+                List<ScenarioConditionAvro> avroConditions = new ArrayList<>();
+
+                for (ScenarioConditionProto protoCondition : protoConditions) {
+                    ScenarioConditionAvro avroCondition = new ScenarioConditionAvro();
+
+                    ConditionTypeProto p = ConditionTypeProto.valueOf(protoCondition.getTypeValue());
+                    String _type =  p.toString();
+
+                    ConditionOperationProto o = ConditionOperationProto.valueOf(protoCondition.getOperationValue());
+                    String _operation = o.toString();
+
+                    avroCondition.setSensorId(protoCondition.getSensorId());
+                    avroCondition.setType(ConditionTypeAvro.valueOf(_type));
+                    avroCondition.setOperation(ConditionOperationAvro.valueOf(_operation));
+                    avroCondition.setValue(protoCondition.getIntValue());
+
+                    avroConditions.add(avroCondition);
+                }
+
+                avro.setConditions(avroConditions);
                 return avro;
             }
             case SCENARIO_REMOVED -> {

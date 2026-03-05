@@ -5,6 +5,7 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,42 +16,47 @@ public class Aggregator {
 
     public Optional<SensorsSnapshotAvro> updateState(SensorEventAvro event) {
         log.debug("Received event {}", event);
-        SensorsSnapshotAvro sensorsSnapshotAvro;
         String hubId = event.getHubId();
 
-        if (snapshots.containsKey(hubId)) {
-            sensorsSnapshotAvro = snapshots.get(hubId);
-        } else {
-            sensorsSnapshotAvro = new SensorsSnapshotAvro();
-            sensorsSnapshotAvro.setTimestamp(event.getTimestamp());
-            sensorsSnapshotAvro.setHubId(event.getHubId());
+        // 1. Найти или создать снапшот для хаба
+        SensorsSnapshotAvro snapshot = snapshots.get(hubId);
+        if (snapshot == null) {
+            snapshot = new SensorsSnapshotAvro();
+            snapshot.setHubId(hubId);
+            snapshot.setTimestamp(Instant.now());
 
-            Map<String, SensorStateAvro> sensorStates = new HashMap<>();
-
-            // SensorStateAvro sensorStateAvro = new SensorStateAvro();
-            // sensorStateAvro.setTimestamp(event.getTimestamp());
-            // sensorStateAvro.setData(event.getPayload());
-            // sensorStateAvro.put(event.getId(), sensorStateAvro);
-            // sensorStates.put(event.getId(), sensorStateAvro);
-            sensorsSnapshotAvro.setSensorsState(sensorStates);
-            snapshots.put(hubId, sensorsSnapshotAvro);
+            snapshot.setSensorsState(new HashMap<>());
+            snapshots.put(hubId, snapshot);
         }
 
-        Map<String, SensorStateAvro> sensorsState = sensorsSnapshotAvro.getSensorsState();
+        Map<String, SensorStateAvro> sensorsState = snapshot.getSensorsState();
+        if (sensorsState == null) {
+            sensorsState = new HashMap<>();
+            snapshot.setSensorsState(sensorsState);
+        }
 
-        if (sensorsState.containsKey(event.getId())) {
-            SensorStateAvro oldState = sensorsState.get(event.getId());
+        // 2. Проверить, есть ли состояние конкретного сенсора
+        SensorStateAvro oldState = sensorsState.get(event.getId());
+        if (oldState != null) {
+            boolean oldIsNewer = oldState.getTimestamp().isAfter(event.getTimestamp());
+            boolean sameData = oldState.getData().equals(event.getPayload());
 
-            if (oldState.getTimestamp().isBefore(event.getTimestamp()) || oldState.getData().equals(event.getPayload())) {
+            // Если старое состояние более свежее ИЛИ данные не изменились —
+            // обновлять снапшот не нужно.
+            if (oldIsNewer || sameData) {
                 return Optional.empty();
             }
         }
 
+        // 3. Пришли новые данные — обновляем состояние сенсора в снапшоте
         SensorStateAvro newState = new SensorStateAvro();
         newState.setTimestamp(event.getTimestamp());
         newState.setData(event.getPayload());
         sensorsState.put(event.getId(), newState);
 
-        return Optional.of(sensorsSnapshotAvro);
+        // Обновляем таймстемп снапшота
+        snapshot.setTimestamp(Instant.now());
+
+        return Optional.of(snapshot);
     }
 }

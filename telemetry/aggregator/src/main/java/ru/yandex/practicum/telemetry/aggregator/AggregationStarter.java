@@ -62,7 +62,7 @@ public class    AggregationStarter {
                         ProducerRecord<String, SensorsSnapshotAvro> snapshotRecord = new ProducerRecord<>(
                                 snapshotsTopic,
                                 null,
-                                timestamp,
+                                snapshotAvro.getTimestamp().toEpochMilli(),
                                 snapshotAvro.getHubId(),
                                 snapshotAvro
                         );
