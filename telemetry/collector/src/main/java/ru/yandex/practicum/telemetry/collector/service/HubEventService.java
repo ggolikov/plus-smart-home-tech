@@ -25,7 +25,6 @@ public class HubEventService {
 
     public void collectHubEvent(HubEventProto event, StreamObserver<Empty> responseObserver) {
         try {
-
             HubEventAvro hubEventAvro = convertToAvro(event);
             Long timestamp = Instant.now().toEpochMilli();
 

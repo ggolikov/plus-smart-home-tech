@@ -26,10 +26,12 @@ import java.util.List;
 public class AggregationStarter {
     private final KafkaConsumerProperties kafkaConsumerProperties;
     private KafkaClient kafkaClient;
+    private Aggregator aggregator;
 
     public AggregationStarter(KafkaConsumerProperties kafkaConsumerProperties) {
         this.kafkaConsumerProperties = kafkaConsumerProperties;
         this.kafkaClient = new KafkaClientImplementation();
+        this.aggregator = new Aggregator(kafkaClient);
     }
 
     /**
@@ -39,17 +41,14 @@ public class AggregationStarter {
      */
     public void start() {
         try {
-
-            // ... подготовка к обработке данных ...
-            // ... например, подписка на топик ...
             Consumer<String, SpecificRecordBase> consumer = kafkaClient.getConsumer();
             consumer.subscribe(List.of(kafkaConsumerProperties.getIncomingTopic()));
+            Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
-            // Цикл обработки событий
             while (true) {
                 ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofMillis(100));
                 for (ConsumerRecord<String, SpecificRecordBase> record : records) {
-                    System.out.printf("topic = %s, offset = %d, value = %s%n", record.topic(), record.offset(), record.value());
+                    aggregator.handleEvent(record.value());
                 }
             }
 
@@ -58,7 +57,6 @@ public class AggregationStarter {
         } catch (Exception e) {
             log.error("Ошибка во время обработки событий от датчиков", e);
         } finally {
-
             try {
                 // Перед тем, как закрыть продюсер и консьюмер, нужно убедиться,
                 // что все сообщения, лежащие в буффере, отправлены и

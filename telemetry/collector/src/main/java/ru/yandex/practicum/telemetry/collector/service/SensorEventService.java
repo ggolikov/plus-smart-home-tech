@@ -27,11 +27,16 @@ public class SensorEventService {
     public void collectSensorEvent(SensorEventProto event, StreamObserver<Empty> responseObserver) {
         try {
             SensorEventAvro sensorEventAvro = convertToAvro(event);
+            Long timestamp = Instant.now().toEpochMilli();
+
             ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(
                     sensorsTopic,
+                    null,
+                    timestamp,
                     event.getId(),
                     sensorEventAvro
             );
+
             kafkaClient.getProducer().send(record);
 
             responseObserver.onNext(Empty.getDefaultInstance());
