@@ -1,0 +1,89 @@
+package ru.yandex.practicum.telemetry.aggregator.client;
+
+import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.kafka.deserializer.SensorEventDeserializer;
+import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
+import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
+
+import java.util.Properties;
+
+@Component
+@EnableConfigurationProperties({KafkaProducerProperties.class, KafkaConsumerProperties.class})
+public class KafkaClientImplementation implements KafkaClient, AutoCloseable {
+    private final KafkaProducerProperties kafkaProducerProperties;
+    private final KafkaConsumerProperties kafkaConsumerProperties;
+    private Producer<String, SensorsSnapshotAvro> producer;
+    private Consumer<String, SensorEventAvro> consumer;
+
+    public KafkaClientImplementation(KafkaProducerProperties kafkaProducerProperties, KafkaConsumerProperties kafkaConsumerProperties) {
+        this.kafkaProducerProperties = kafkaProducerProperties;
+        this.kafkaConsumerProperties = kafkaConsumerProperties;
+    }
+
+    public KafkaClientImplementation() {
+        this.kafkaProducerProperties = new KafkaProducerProperties();
+        this.kafkaConsumerProperties = new KafkaConsumerProperties();
+    }
+
+    @Override
+    public Producer<String, SensorsSnapshotAvro> getProducer() {
+        if (producer == null) {
+            initProducer();
+        }
+        return producer;
+    }
+
+    private void initProducer() {
+        Properties config = new Properties();
+//        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProducerProperties.getBootstrapServers());
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,  "localhost:9092");
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class.getName());
+//        config.put(ProducerConfig.ACKS_CONFIG, kafkaProducerProperties.getAcks());
+        config.put(ProducerConfig.ACKS_CONFIG, "all");
+//        config.put(ProducerConfig.RETRIES_CONFIG, kafkaProducerProperties.getRetries());
+        config.put(ProducerConfig.RETRIES_CONFIG, 3);
+
+        producer = new KafkaProducer<>(config);
+    }
+
+    @Override
+    public Consumer<String, SensorEventAvro> getConsumer() {
+        if (consumer == null) {
+            initConsumer();
+        }
+
+        return consumer;
+    }
+
+    private void initConsumer() {
+        Properties config = new Properties();
+//        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConsumerProperties.getBootstrapServers());
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SensorEventDeserializer.class.getName());
+//        config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConsumerProperties.getGroupId());
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "telemetry.sensors.v1");
+
+        consumer = new KafkaConsumer<>(config);
+    }
+
+    @Override
+    public void close() {
+        if (producer != null) {
+            producer.flush();
+            producer.close();
+        }
+    }
+}

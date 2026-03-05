@@ -24,19 +24,17 @@ public class GeneralAvroSerializer implements Serializer<SpecificRecordBase> {
 
     @Override
     public byte[] serialize(String topic, SpecificRecordBase data) {
+        if(data == null) {
+            return null;
+        }
+
         try(ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            byte[] result = null;
             encoder = encoderFactory.binaryEncoder(outputStream, encoder);
 
-            if (data == null) {
-                DatumWriter<SpecificRecordBase> writer = new SpecificDatumWriter<>(data.getSchema());
-                writer.write(data, encoder);
-                encoder.flush();
-                result = outputStream.toByteArray();
-            } else {
-                log.info("Serialized data: " + data);
-            }
-            return result;
+            DatumWriter<SpecificRecordBase> writer = new SpecificDatumWriter<>(data.getSchema());
+            writer.write(data, encoder);
+            encoder.flush();
+            return outputStream.toByteArray();
         } catch (IOException e) {
             throw new SerializationException("Ошибка сериализации данных для топика" + topic);
         }
