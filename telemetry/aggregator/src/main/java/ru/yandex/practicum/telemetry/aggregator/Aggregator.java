@@ -22,6 +22,17 @@ public class Aggregator {
             sensorsSnapshotAvro = snapshots.get(hubId);
         } else {
             sensorsSnapshotAvro = new SensorsSnapshotAvro();
+            sensorsSnapshotAvro.setTimestamp(event.getTimestamp());
+            sensorsSnapshotAvro.setHubId(event.getHubId());
+
+            Map<String, SensorStateAvro> sensorStates = new HashMap<>();
+
+            // SensorStateAvro sensorStateAvro = new SensorStateAvro();
+            // sensorStateAvro.setTimestamp(event.getTimestamp());
+            // sensorStateAvro.setData(event.getPayload());
+            // sensorStateAvro.put(event.getId(), sensorStateAvro);
+            // sensorStates.put(event.getId(), sensorStateAvro);
+            sensorsSnapshotAvro.setSensorsState(sensorStates);
             snapshots.put(hubId, sensorsSnapshotAvro);
         }
 

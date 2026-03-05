@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -44,6 +45,7 @@ public class    AggregationStarter {
     public void start() {
         try {
             Consumer<String, SensorEventAvro> consumer = kafkaClient.getConsumer();
+            Producer<String, SensorsSnapshotAvro> producer = kafkaClient.getProducer();
             consumer.subscribe(List.of(kafkaConsumerProperties.getIncomingTopic()));
             Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
@@ -64,7 +66,7 @@ public class    AggregationStarter {
                                 snapshotAvro.getHubId(),
                                 snapshotAvro
                         );
-                        kafkaClient.getProducer().send(snapshotRecord);
+                        producer.send(snapshotRecord);
                     }
 
                 }
