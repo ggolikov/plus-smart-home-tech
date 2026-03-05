@@ -69,6 +69,7 @@ public class SensorEventService {
                 LightSensorAvro avro = new LightSensorAvro();
 
                 avro.setLinkQuality(payload.getLinkQuality());
+                avro.setLuminosity(payload.getLuminosity());
 
                 return avro;
             }

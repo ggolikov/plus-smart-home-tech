@@ -118,7 +118,7 @@ public class HubEventService {
                     avroCondition.setSensorId(protoCondition.getSensorId());
                     avroCondition.setType(ConditionTypeAvro.valueOf(_type));
                     avroCondition.setOperation(ConditionOperationAvro.valueOf(_operation));
-                    avroCondition.setValue(protoCondition.getIntValue());
+                    avroCondition.setValue(protoCondition.hasBoolValue() ? protoCondition.getBoolValue() : protoCondition.getIntValue());
 
                     avroConditions.add(avroCondition);
                 }
