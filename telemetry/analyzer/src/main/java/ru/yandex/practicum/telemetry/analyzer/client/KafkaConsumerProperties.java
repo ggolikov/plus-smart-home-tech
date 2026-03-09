@@ -6,9 +6,10 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@ConfigurationProperties(prefix = "analyzer.kafka.producer.properties")
-public class KafkaProperties {
+@ConfigurationProperties(prefix = "analyzer.kafka.consumer.properties")
+public class KafkaConsumerProperties {
     private String bootstrapServers;
-    private String acks;
-    private String retries;
+    private String groupId;
+    private String hubEventsTopic;
+    private String snapshotEventsTopic;
 }

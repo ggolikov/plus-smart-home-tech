@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class KafkaClientConfiguration {
     public static KafkaClient initClient() {
-        return new KafkaClientImplementation(new KafkaProperties());
+        return new KafkaClientImplementation(new KafkaConsumerProperties());
     }
 
     private final KafkaClient kafkaClient;

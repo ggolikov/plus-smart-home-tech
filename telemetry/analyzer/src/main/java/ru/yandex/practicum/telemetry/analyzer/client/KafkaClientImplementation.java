@@ -1,49 +1,75 @@
 package ru.yandex.practicum.telemetry.analyzer.client;
 
-import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer;
+import ru.yandex.practicum.kafka.deserializer.HubEventDeserializer;
+import ru.yandex.practicum.kafka.deserializer.SnapshotDeserializer;
+import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
+
 import java.util.Properties;
 
 @Component
-@EnableConfigurationProperties(KafkaProperties.class)
+@EnableConfigurationProperties({KafkaConsumerProperties.class})
 public class KafkaClientImplementation implements KafkaClient, AutoCloseable {
-    private final KafkaProperties kafkaProperties;
-    private Producer<String, SpecificRecordBase> producer;
+    private final KafkaConsumerProperties kafkaConsumerProperties;
+    private Consumer<String, HubEventAvro> hubEventsConsumer;
+    private Consumer<String, SensorsSnapshotAvro> snapshotEventsConsumer;
 
-    public KafkaClientImplementation(KafkaProperties kafkaProperties) {
-        this.kafkaProperties = kafkaProperties;
+    public KafkaClientImplementation(KafkaConsumerProperties kafkaConsumerProperties) {
+        this.kafkaConsumerProperties = kafkaConsumerProperties;
+    }
+
+    public KafkaClientImplementation() {
+        this.kafkaConsumerProperties = new KafkaConsumerProperties();
     }
 
     @Override
-    public Producer<String, SpecificRecordBase> getProducer() {
-        if (producer == null) {
-            initProducer();
+    public Consumer<String, HubEventAvro> getHubEventsConsumer() {
+        if (hubEventsConsumer == null) {
+            initHubEventsConsumer();
         }
-        return producer;
+
+        return hubEventsConsumer;
     }
 
-    private void initProducer() {
+    private void initHubEventsConsumer() {
         Properties config = new Properties();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class.getName());
-        config.put(ProducerConfig.ACKS_CONFIG, kafkaProperties.getAcks());
-        config.put(ProducerConfig.RETRIES_CONFIG, kafkaProperties.getRetries());
+//        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConsumerProperties.getBootstrapServers());
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, HubEventDeserializer.class.getName());
+//        config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConsumerProperties.getGroupId());
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "telemetry.hubs.v1");
 
-        producer = new KafkaProducer<>(config);
+        hubEventsConsumer = new KafkaConsumer<>(config);
     }
 
     @Override
-    public void close() {
-        if (producer != null) {
-            producer.flush();
-            producer.close();
+    public Consumer<String, SensorsSnapshotAvro> getSnapshotEventsConsumer() {
+        if (snapshotEventsConsumer == null) {
+            initSnapshotEventsConsumer();
         }
+
+        return snapshotEventsConsumer;
     }
+
+    private void initSnapshotEventsConsumer() {
+        Properties config = new Properties();
+//        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConsumerProperties.getBootstrapServers());
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SnapshotDeserializer.class.getName());
+//        config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConsumerProperties.getGroupId());
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "telemetry.hubs.v1");
+
+        snapshotEventsConsumer = new KafkaConsumer<>(config);
+    }
+
+    @Override
+    public void close() {}
 }
