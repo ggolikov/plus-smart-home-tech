@@ -15,5 +15,9 @@ public class SnapshotProcessor implements Runnable {
         // цикл опроса
     }
 
+    public void start() {
+
+    }
+
     // ...детали реализации...
 }

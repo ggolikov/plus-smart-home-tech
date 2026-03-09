@@ -15,5 +15,8 @@ public class HubEventProcessor implements Runnable {
         // цикл опроса
     }
 
+    public void start() {
+
+    }
     // ...детали реализации...
 } 

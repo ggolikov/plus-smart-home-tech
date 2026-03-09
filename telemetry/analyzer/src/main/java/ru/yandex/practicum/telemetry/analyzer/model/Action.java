@@ -6,7 +6,7 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entit
+@Entity
 @Table(name = "actions")
 @Getter
 @Setter
