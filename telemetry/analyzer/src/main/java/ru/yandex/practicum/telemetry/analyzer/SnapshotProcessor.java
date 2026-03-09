@@ -7,47 +7,52 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.analyzer.client.KafkaClient;
 import ru.yandex.practicum.telemetry.analyzer.client.KafkaClientImplementation;
 import ru.yandex.practicum.telemetry.analyzer.client.KafkaConsumerProperties;
+import ru.yandex.practicum.telemetry.analyzer.service.SnapshotEventService;
 
 import java.time.Duration;
 import java.util.List;
 
 @Slf4j
-@Component
+@Service
 @EnableConfigurationProperties(KafkaConsumerProperties.class)
 public class SnapshotProcessor implements Runnable {
     private final KafkaConsumerProperties kafkaConsumerProperties;
+    private final SnapshotEventService snapshotEventService;
     private KafkaClient kafkaClient;
+    private Consumer<String, SensorsSnapshotAvro> consumer;
 
-    public SnapshotProcessor(KafkaConsumerProperties kafkaConsumerProperties) {
+    public SnapshotProcessor(KafkaConsumerProperties kafkaConsumerProperties, SnapshotEventService snapshotEventService) {
         this.kafkaConsumerProperties = kafkaConsumerProperties;
         this.kafkaClient = new KafkaClientImplementation();
+        this.snapshotEventService = snapshotEventService;
     }
 
     @Override
     public void run() {
         try {
-            Consumer<String, SensorsSnapshotAvro> consumer = kafkaClient.getSnapshotEventsConsumer();
+            consumer = kafkaClient.getSnapshotEventsConsumer();
             consumer.subscribe(List.of(kafkaConsumerProperties.getSnapshotEventsTopic()));
             Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
             while (true) {
                 ConsumerRecords<String, SensorsSnapshotAvro> records = consumer.poll(Duration.ofMillis(100));
                 for (ConsumerRecord<String, SensorsSnapshotAvro> record : records) {
+                    SensorsSnapshotAvro snapshotAvro = record.value();
                     log.info("Hub event received: {}", record.value());
+                    snapshotEventService.processEvent(snapshotAvro);
                 }
             }
 
         } catch (WakeupException ignored) {
-            // игнорируем - закрываем консьюмер и продюсер в блоке finally
         } catch (Exception e) {
             log.error("Ошибка во время обработки событий от датчиков", e);
         } finally {
             try {
-                // здесь нужно вызвать метод консьюмера для фиксации смещений
                 kafkaClient.getHubEventsConsumer().commitSync();
 
             } finally {
@@ -60,5 +65,4 @@ public class SnapshotProcessor implements Runnable {
     public void start() {
         run();
     }
-    // ...детали реализации...
 }

@@ -11,10 +11,7 @@ import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.telemetry.analyzer.client.KafkaClient;
 import ru.yandex.practicum.telemetry.analyzer.client.KafkaClientImplementation;
 import ru.yandex.practicum.telemetry.analyzer.client.KafkaConsumerProperties;
-import ru.yandex.practicum.telemetry.analyzer.model.Sensor;
-import ru.yandex.practicum.telemetry.analyzer.model.Scenario;
-import ru.yandex.practicum.telemetry.analyzer.repository.SensorRepository;
-import ru.yandex.practicum.telemetry.analyzer.repository.ScenarioRepository;
+import ru.yandex.practicum.telemetry.analyzer.service.HubEventService;
 
 import java.time.Duration;
 import java.util.List;
@@ -24,22 +21,19 @@ import java.util.List;
 @EnableConfigurationProperties(KafkaConsumerProperties.class)
 public class HubEventProcessor implements Runnable {
     private final KafkaConsumerProperties kafkaConsumerProperties;
-    private final SensorRepository sensorRepository;
-    private final ScenarioRepository scenarioRepository;
+    private final HubEventService hubEventService;
     private KafkaClient kafkaClient;
+    private Consumer<String, HubEventAvro> consumer;
 
-    public HubEventProcessor(KafkaConsumerProperties kafkaConsumerProperties,
-                             SensorRepository sensorRepository,
-                             ScenarioRepository scenarioRepository) {
+    public HubEventProcessor(KafkaConsumerProperties kafkaConsumerProperties, KafkaClient kafkaClient,
+                             HubEventService hubEventService) {
         this.kafkaConsumerProperties = kafkaConsumerProperties;
-        this.sensorRepository = sensorRepository;
-        this.scenarioRepository = scenarioRepository;
         this.kafkaClient = new KafkaClientImplementation();
+        this.hubEventService = hubEventService;
     }
 
     @Override
     public void run() {
-        Consumer<String, HubEventAvro> consumer = null;
         try {
             consumer = kafkaClient.getHubEventsConsumer();
             consumer.subscribe(List.of(kafkaConsumerProperties.getHubEventsTopic()));
@@ -53,7 +47,7 @@ public class HubEventProcessor implements Runnable {
                         continue;
                     }
                     log.info("Hub event received: {}", event);
-                    processHubEvent(event);
+                    hubEventService.processEvent(event);
                 }
             }
 
@@ -78,77 +72,5 @@ public class HubEventProcessor implements Runnable {
 
     public void start() {
         run();
-    }
-
-    /**
-     * Обработка одного события хаба:
-     * - DEVICE_ADDED: сохраняем устройство (Sensor) в БД
-     * - DEVICE_REMOVED: удаляем устройство из БД
-     * - SCENARIO_ADDED: сохраняем сценарий в БД
-     * - SCENARIO_REMOVED: удаляем сценарий из БД
-     */
-    private void processHubEvent(HubEventAvro event) {
-        String hubId = event.getHubId();
-        Object payload = event.getPayload();
-
-        if (payload instanceof DeviceAddedEventAvro deviceAdded) {
-            handleDeviceAdded(hubId, deviceAdded);
-        } else if (payload instanceof DeviceRemovedEventAvro deviceRemoved) {
-            handleDeviceRemoved(hubId, deviceRemoved);
-        } else if (payload instanceof ScenarioAddedEventAvro scenarioAdded) {
-            handleScenarioAdded(hubId, scenarioAdded);
-        } else if (payload instanceof ScenarioRemovedEventAvro scenarioRemoved) {
-            handleScenarioRemoved(hubId, scenarioRemoved);
-        } else {
-            log.warn("Получен HubEventAvro с неизвестным типом payload: {}", payload);
-        }
-    }
-
-    private void handleDeviceAdded(String hubId, DeviceAddedEventAvro event) {
-        String sensorId = event.getId();
-        log.info("DEVICE_ADDED: hubId={}, sensorId={}", hubId, sensorId);
-
-        Sensor sensor = sensorRepository
-                .findByIdAndHubId(sensorId, hubId)
-                .orElseGet(() -> {
-                    Sensor s = new Sensor();
-                    s.setId(sensorId);
-                    s.setHubId(hubId);
-                    return s;
-                });
-
-        sensorRepository.save(sensor);
-    }
-
-    private void handleDeviceRemoved(String hubId, DeviceRemovedEventAvro event) {
-        String sensorId = event.getId();
-        log.info("DEVICE_REMOVED: hubId={}, sensorId={}", hubId, sensorId);
-
-        sensorRepository.findByIdAndHubId(sensorId, hubId)
-                .ifPresent(sensorRepository::delete);
-    }
-
-    private void handleScenarioAdded(String hubId, ScenarioAddedEventAvro event) {
-        String name = event.getName();
-        log.info("SCENARIO_ADDED: hubId={}, name={}", hubId, name);
-
-        Scenario scenario = scenarioRepository
-                .findByHubIdAndName(hubId, name)
-                .orElseGet(() -> {
-                    Scenario s = new Scenario();
-                    s.setHubId(hubId);
-                    s.setName(name);
-                    return s;
-                });
-
-        scenarioRepository.save(scenario);
-    }
-
-    private void handleScenarioRemoved(String hubId, ScenarioRemovedEventAvro event) {
-        String name = event.getName();
-        log.info("SCENARIO_REMOVED: hubId={}, name={}", hubId, name);
-
-        scenarioRepository.findByHubIdAndName(hubId, name)
-                .ifPresent(scenarioRepository::delete);
     }
 }
