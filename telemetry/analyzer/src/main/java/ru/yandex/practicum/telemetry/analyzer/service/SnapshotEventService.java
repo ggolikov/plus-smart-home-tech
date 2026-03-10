@@ -53,7 +53,7 @@ public class SnapshotEventService {
             return;
         }
 
-        List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
+        List<Scenario> scenarios = scenarioRepository.findAllWithDetailsByHubId(hubId);
         if (scenarios.isEmpty()) {
             log.debug("Для hubId={} нет сценариев, действий нет", hubId);
             return;

@@ -19,6 +19,7 @@ import java.util.List;
 @Slf4j
 @Service
 @EnableConfigurationProperties(KafkaConsumerProperties.class)
+@EnableTransactionManagement
 public class SnapshotProcessor implements Runnable {
     private final KafkaConsumerProperties kafkaConsumerProperties;
     private final SnapshotEventService snapshotEventService;
