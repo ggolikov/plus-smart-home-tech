@@ -58,7 +58,7 @@ public class HubEventService {
             log.warn("Получен HubEventAvro с неизвестным типом payload: {}", payload);
         }
     }
-
+    @Transactional
     private void handleDeviceAdded(String hubId, DeviceAddedEventAvro event) {
         String sensorId = event.getId();
         log.info("DEVICE_ADDED: hubId={}, sensorId={}", hubId, sensorId);
@@ -74,8 +74,8 @@ public class HubEventService {
 
         sensorRepository.save(sensor);
     }
-
-    private void handleDeviceRemoved(String hubId, DeviceRemovedEventAvro event) {
+    @Transactional
+    public void handleDeviceRemoved(String hubId, DeviceRemovedEventAvro event) {
         String sensorId = event.getId();
         log.info("DEVICE_REMOVED: hubId={}, sensorId={}", hubId, sensorId);
 
@@ -84,7 +84,7 @@ public class HubEventService {
     }
 
     @Transactional
-    private void handleScenarioAdded(String hubId, ScenarioAddedEventAvro event) {
+    public void handleScenarioAdded(String hubId, ScenarioAddedEventAvro event) {
         String name = event.getName();
         log.info("SCENARIO_ADDED: hubId={}, name={}", hubId, name);
 
@@ -197,8 +197,8 @@ public class HubEventService {
         // 3) Сохраняем сценарий с обновлёнными связями (каскад сохранит ScenarioCondition/ScenarioAction)
         scenarioRepository.save(scenario);
     }
-
-    private void handleScenarioRemoved(String hubId, ScenarioRemovedEventAvro event) {
+    @Transactional
+    public void handleScenarioRemoved(String hubId, ScenarioRemovedEventAvro event) {
         String name = event.getName();
         log.info("SCENARIO_REMOVED: hubId={}, name={}", hubId, name);
 

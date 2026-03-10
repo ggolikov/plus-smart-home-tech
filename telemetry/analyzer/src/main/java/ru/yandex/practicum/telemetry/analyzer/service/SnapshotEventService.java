@@ -66,25 +66,25 @@ public class SnapshotEventService {
     }
 
     private boolean isScenarioTriggered(Scenario scenario, Map<String, SensorStateAvro> sensorsState) {
+        // Теперь сценарий хранит условия как Map<sensor_id, Condition>
         Map<String, Condition> conditions = scenario.getScenarioConditions();
         if (conditions == null || conditions.isEmpty()) {
             // Нет условий — трактуем как "всегда истинный" сценарий
             return true;
         }
 
-        for (ScenarioCondition scenarioCondition : conditions.get(sensorsState.)) {
-            SensorStateAvro sensorState = sensorsState.get(
-                    scenarioCondition.getSensor().getId()
-            );
+        for (Map.Entry<String, Condition> entry : conditions.entrySet()) {
+            String sensorId = entry.getKey();
+            Condition condition = entry.getValue();
 
-            if (sensorState == null) {
-                // Нет данных по нужному датчику — условие ложно
+            if (condition == null) {
+                // Невалидное состояние БД — лучше считать условие ложным
                 return false;
             }
 
-            Condition condition = scenarioCondition.getCondition();
-            if (condition == null) {
-                // Невалидное состояние БД — лучше считать условие ложным
+            SensorStateAvro sensorState = sensorsState.get(sensorId);
+            if (sensorState == null) {
+                // Нет данных по нужному датчику — условие ложно
                 return false;
             }
 
