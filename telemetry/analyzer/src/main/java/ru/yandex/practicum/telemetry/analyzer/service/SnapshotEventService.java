@@ -10,15 +10,13 @@ import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.grpc.telemetry.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
-import ru.yandex.practicum.telemetry.analyzer.model.Condition;
-import ru.yandex.practicum.telemetry.analyzer.model.Scenario;
-import ru.yandex.practicum.telemetry.analyzer.model.ScenarioAction;
-import ru.yandex.practicum.telemetry.analyzer.model.ScenarioCondition;
+import ru.yandex.practicum.telemetry.analyzer.model.*;
 import ru.yandex.practicum.telemetry.analyzer.repository.ScenarioRepository;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -53,7 +51,7 @@ public class SnapshotEventService {
             return;
         }
 
-        List<Scenario> scenarios = scenarioRepository.findAllWithDetailsByHubId(hubId);
+        List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
         if (scenarios.isEmpty()) {
             log.debug("Для hubId={} нет сценариев, действий нет", hubId);
             return;
@@ -68,13 +66,13 @@ public class SnapshotEventService {
     }
 
     private boolean isScenarioTriggered(Scenario scenario, Map<String, SensorStateAvro> sensorsState) {
-        List<ScenarioCondition> conditions = scenario.getScenarioConditions();
+        Map<String, Condition> conditions = scenario.getScenarioConditions();
         if (conditions == null || conditions.isEmpty()) {
             // Нет условий — трактуем как "всегда истинный" сценарий
             return true;
         }
 
-        for (ScenarioCondition scenarioCondition : conditions) {
+        for (ScenarioCondition scenarioCondition : conditions.get(sensorsState.)) {
             SensorStateAvro sensorState = sensorsState.get(
                     scenarioCondition.getSensor().getId()
             );
@@ -177,27 +175,27 @@ public class SnapshotEventService {
     }
 
     private void executeScenarioActions(String hubId, Scenario scenario) {
-        List<ScenarioAction> actions = scenario.getScenarioActions();
+        Map<String, Action> actions = scenario.getScenarioActions();
         if (actions == null || actions.isEmpty()) {
             return;
         }
 
-        for (ScenarioAction scenarioAction : actions) {
-            DeviceActionProto actionProto = buildDeviceActionProto(scenarioAction);
-            if (actionProto == null) {
-                continue;
-            }
-
-            DeviceActionRequest request = DeviceActionRequest.newBuilder()
-                    .setHubId(hubId)
-                    .setScenarioName(scenario.getName())
-                    .setAction(actionProto)
-                    .setTimestamp(toProtoTimestamp(Instant.now()))
-                    .build();
-
-            log.info("Отправляем действие в HubRouter: {}", request);
-            hubRouterClient.handleDeviceAction(request);
-        }
+//        for (ScenarioAction scenarioAction : actions) {
+//            DeviceActionProto actionProto = buildDeviceActionProto(scenarioAction);
+//            if (actionProto == null) {
+//                continue;
+//            }
+//
+//            DeviceActionRequest request = DeviceActionRequest.newBuilder()
+//                    .setHubId(hubId)
+//                    .setScenarioName(scenario.getName())
+//                    .setAction(actionProto)
+//                    .setTimestamp(toProtoTimestamp(Instant.now()))
+//                    .build();
+//
+//            log.info("Отправляем действие в HubRouter: {}", request);
+//            hubRouterClient.handleDeviceAction(request);
+//        }
     }
 
     private DeviceActionProto buildDeviceActionProto(ScenarioAction scenarioAction) {

@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "scenarios", uniqueConstraints = {
@@ -26,11 +28,26 @@ public class Scenario {
     @Column(name = "name")
     private String name;
 
-    @OneToMany(fetch=FetchType.EAGER, mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<ScenarioCondition> scenarioConditions = new ArrayList<>();
-
-    @OneToMany(fetch=FetchType.EAGER, mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<ScenarioAction> scenarioActions = new ArrayList<>();
+    @OneToMany
+    @MapKeyColumn(
+            table = "scenario_conditions",
+            name = "sensor_id"
+    )
+    @JoinTable(
+            name = "scenario_conditions",
+            joinColumns = @JoinColumn(name = "scenario_id"),
+            inverseJoinColumns = @JoinColumn(name = "condition_id")
+    )
+    private Map<String, Condition> scenarioConditions = new HashMap<>();
+    @OneToMany
+    @MapKeyColumn(
+            table = "scenario_actions",
+            name = "sensor_id"
+    )
+    @JoinTable(
+            name = "scenario_actions",
+            joinColumns = @JoinColumn(name = "scenario_id"),
+            inverseJoinColumns = @JoinColumn(name = "action_id")
+    )
+    private Map<String, Action> scenarioActions = new HashMap<>();
 }

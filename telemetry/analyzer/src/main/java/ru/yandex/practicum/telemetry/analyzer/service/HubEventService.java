@@ -16,6 +16,7 @@ import ru.yandex.practicum.telemetry.analyzer.repository.SensorRepository;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 @Slf4j
 @Service
@@ -94,8 +95,8 @@ public class HubEventService {
                     Scenario s = new Scenario();
                     s.setHubId(hubId);
                     s.setName(name);
-                    s.setScenarioConditions(new ArrayList<>());
-                    s.setScenarioActions(new ArrayList<>());
+                    s.setScenarioConditions(new HashMap<>());
+                    s.setScenarioActions(new HashMap<>());
                     return s;
                 });
 
@@ -106,13 +107,13 @@ public class HubEventService {
         if (scenario.getScenarioConditions() != null) {
             scenario.getScenarioConditions().clear();
         } else {
-            scenario.setScenarioConditions(new ArrayList<>());
+            scenario.setScenarioConditions(new HashMap<>());
         }
 
         if (scenario.getScenarioActions() != null) {
             scenario.getScenarioActions().clear();
         } else {
-            scenario.setScenarioActions(new ArrayList<>());
+            scenario.setScenarioActions(new HashMap<>());
         }
 
         // 2.1) Условия
@@ -151,7 +152,7 @@ public class HubEventService {
                         condition.getId()
                 ));
 
-                scenario.getScenarioConditions().add(link);
+                scenario.getScenarioConditions().put(sensorId, condition);
             }
         }
 
@@ -189,7 +190,7 @@ public class HubEventService {
                         action.getId()
                 ));
 
-                scenario.getScenarioActions().add(link);
+                scenario.getScenarioActions().put(sensorId, action);
             }
         }
 
