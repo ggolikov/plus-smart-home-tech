@@ -43,6 +43,7 @@ public class SnapshotProcessor implements Runnable {
                 for (ConsumerRecord<String, SensorsSnapshotAvro> record : records) {
                     SensorsSnapshotAvro snapshotAvro = record.value();
                     log.info("Snapshot event received: {}", record.value());
+
                     snapshotEventService.processEvent(snapshotAvro);
                 }
             }
