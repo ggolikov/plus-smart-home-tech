@@ -136,7 +136,7 @@ public class SnapshotEventService {
                 yield null;
             }
             case "TEMPERATURE" -> {
-                if (payload instanceof ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro temp) {
+                if (payload instanceof ru.yandex.practicum.kafka.telemetry.event.ClimateSensorAvro temp) {
                     yield temp.getTemperatureC();
                 }
                 yield null;
