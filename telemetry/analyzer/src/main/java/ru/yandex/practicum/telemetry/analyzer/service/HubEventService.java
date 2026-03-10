@@ -95,8 +95,8 @@ public class HubEventService {
                     Scenario s = new Scenario();
                     s.setHubId(hubId);
                     s.setName(name);
-                    s.setScenarioConditions(new HashMap<>());
-                    s.setScenarioActions(new HashMap<>());
+                    s.setConditions(new HashMap<>());
+                    s.setActions(new HashMap<>());
                     return s;
                 });
 
@@ -104,16 +104,16 @@ public class HubEventService {
         scenario = scenarioRepository.save(scenario);
 
         // 2) Обновляем условия/действия сценария (перезаписываем содержимое)
-        if (scenario.getScenarioConditions() != null) {
-            scenario.getScenarioConditions().clear();
+        if (scenario.getConditions() != null) {
+            scenario.getConditions().clear();
         } else {
-            scenario.setScenarioConditions(new HashMap<>());
+            scenario.setConditions(new HashMap<>());
         }
 
-        if (scenario.getScenarioActions() != null) {
-            scenario.getScenarioActions().clear();
+        if (scenario.getActions() != null) {
+            scenario.getActions().clear();
         } else {
-            scenario.setScenarioActions(new HashMap<>());
+            scenario.setActions(new HashMap<>());
         }
 
         // 2.1) Условия
@@ -152,7 +152,7 @@ public class HubEventService {
                         condition.getId()
                 ));
 
-                scenario.getScenarioConditions().put(sensorId, condition);
+                scenario.getConditions().put(sensorId, condition);
             }
         }
 
@@ -190,7 +190,7 @@ public class HubEventService {
                         action.getId()
                 ));
 
-                scenario.getScenarioActions().put(sensorId, action);
+                scenario.getActions().put(sensorId, action);
             }
         }
 

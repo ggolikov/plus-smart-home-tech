@@ -67,10 +67,10 @@ public class SnapshotEventService {
 
     private boolean isScenarioTriggered(Scenario scenario, Map<String, SensorStateAvro> sensorsState) {
         // Теперь сценарий хранит условия как Map<sensor_id, Condition>
-        Map<String, Condition> conditions = scenario.getScenarioConditions();
+        Map<String, Condition> conditions = scenario.getConditions();
         if (conditions == null || conditions.isEmpty()) {
             // Нет условий — трактуем как "всегда истинный" сценарий
-            return true;
+            return false;
         }
 
         for (Map.Entry<String, Condition> entry : conditions.entrySet()) {
@@ -175,44 +175,46 @@ public class SnapshotEventService {
     }
 
     private void executeScenarioActions(String hubId, Scenario scenario) {
-        Map<String, Action> actions = scenario.getScenarioActions();
+        // Теперь сценарий хранит действия как Map<sensor_id, Action>
+        Map<String, Action> actions = scenario.getActions();
         if (actions == null || actions.isEmpty()) {
             return;
         }
 
-//        for (ScenarioAction scenarioAction : actions) {
-//            DeviceActionProto actionProto = buildDeviceActionProto(scenarioAction);
-//            if (actionProto == null) {
-//                continue;
-//            }
-//
-//            DeviceActionRequest request = DeviceActionRequest.newBuilder()
-//                    .setHubId(hubId)
-//                    .setScenarioName(scenario.getName())
-//                    .setAction(actionProto)
-//                    .setTimestamp(toProtoTimestamp(Instant.now()))
-//                    .build();
-//
-//            log.info("Отправляем действие в HubRouter: {}", request);
-//            hubRouterClient.handleDeviceAction(request);
-//        }
+        for (Map.Entry<String, Action> entry : actions.entrySet()) {
+            String sensorId = entry.getKey();
+            Action action = entry.getValue();
+
+            DeviceActionProto actionProto = buildDeviceActionProto(sensorId, action);
+            if (actionProto == null) {
+                continue;
+            }
+
+            DeviceActionRequest request = DeviceActionRequest.newBuilder()
+                    .setHubId(hubId)
+                    .setScenarioName(scenario.getName())
+                    .setAction(actionProto)
+                    .setTimestamp(toProtoTimestamp(Instant.now()))
+                    .build();
+
+            log.info("Отправляем действие в HubRouter: {}", request);
+            hubRouterClient.handleDeviceAction(request);
+        }
     }
 
-    private DeviceActionProto buildDeviceActionProto(ScenarioAction scenarioAction) {
-        if (scenarioAction.getSensor() == null || scenarioAction.getAction() == null) {
+    private DeviceActionProto buildDeviceActionProto(String sensorId, Action action) {
+        if (sensorId == null || action == null) {
             return null;
         }
 
-        String sensorId = scenarioAction.getSensor().getId();
-        String type = scenarioAction.getAction().getType();
-        Integer value = scenarioAction.getAction().getValue();
+        String type = action.getType();
+        Integer value = action.getValue();
 
         DeviceActionProto.Builder builder = DeviceActionProto.newBuilder()
                 .setSensorId(sensorId);
 
         try {
-            ActionTypeProto actionTypeProto =
-                    ActionTypeProto.valueOf(type);
+            ActionTypeProto actionTypeProto = ActionTypeProto.valueOf(type);
             builder.setType(actionTypeProto);
         } catch (IllegalArgumentException e) {
             log.warn("Неизвестный тип действия '{}', пропускаем", type);

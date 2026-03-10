@@ -38,7 +38,7 @@ public class Scenario {
             joinColumns = @JoinColumn(name = "scenario_id"),
             inverseJoinColumns = @JoinColumn(name = "condition_id")
     )
-    private Map<String, Condition> scenarioConditions = new HashMap<>();
+    private Map<String, Condition> conditions = new HashMap<>();
     @OneToMany
     @MapKeyColumn(
             table = "scenario_actions",
@@ -49,5 +49,5 @@ public class Scenario {
             joinColumns = @JoinColumn(name = "scenario_id"),
             inverseJoinColumns = @JoinColumn(name = "action_id")
     )
-    private Map<String, Action> scenarioActions = new HashMap<>();
+    private Map<String, Action> actions = new HashMap<>();
 }
