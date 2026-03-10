@@ -6,6 +6,7 @@ import ru.yandex.practicum.telemetry.analyzer.model.Scenario;
 import ru.yandex.practicum.telemetry.analyzer.model.Sensor;
 import ru.yandex.practicum.telemetry.analyzer.repository.ScenarioRepository;
 import ru.yandex.practicum.telemetry.analyzer.repository.SensorRepository;
+import ru.yandex.practicum.kafka.telemetry.event.*;
 
 @Slf4j
 @Service

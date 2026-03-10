@@ -5,9 +5,9 @@ import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
-import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequestOrBuilder;
 import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
-import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
+import ru.yandex.practicum.kafka.telemetry.event.*;
+import ru.yandex.practicum.grpc.telemetry.event.*;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import ru.yandex.practicum.telemetry.analyzer.model.Condition;
 import ru.yandex.practicum.telemetry.analyzer.model.Scenario;
@@ -16,7 +16,6 @@ import ru.yandex.practicum.telemetry.analyzer.model.ScenarioCondition;
 import ru.yandex.practicum.telemetry.analyzer.repository.ScenarioRepository;
 
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -212,8 +211,8 @@ public class SnapshotEventService {
                 .setSensorId(sensorId);
 
         try {
-            DeviceActionProto.ActionTypeProto actionTypeProto =
-                    DeviceActionProto.ActionTypeProto.valueOf(type);
+            ActionTypeProto actionTypeProto =
+                    ActionTypeProto.valueOf(type);
             builder.setType(actionTypeProto);
         } catch (IllegalArgumentException e) {
             log.warn("Неизвестный тип действия '{}', пропускаем", type);
