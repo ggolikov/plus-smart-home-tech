@@ -26,11 +26,11 @@ public class Scenario {
     @Column(name = "name")
     private String name;
 
-    @OneToMany(mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch=FetchType.EAGER, mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ScenarioCondition> scenarioConditions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch=FetchType.EAGER, mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ScenarioAction> scenarioActions = new ArrayList<>();
 }
