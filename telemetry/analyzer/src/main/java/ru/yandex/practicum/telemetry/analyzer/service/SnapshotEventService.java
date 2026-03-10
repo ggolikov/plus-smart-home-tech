@@ -3,6 +3,7 @@ package ru.yandex.practicum.telemetry.analyzer.service;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
 import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
@@ -39,6 +40,7 @@ public class SnapshotEventService {
      * 2. Для каждого сценария проверяем, выполняются ли ВСЕ его условия.
      * 3. Если условия выполняются, для каждого действия сценария отправляем gRPC-запрос в хаб.
      */
+    @Transactional(readOnly = true)
     public void processEvent(SensorsSnapshotAvro snapshot) {
         if (snapshot == null) {
             return;
