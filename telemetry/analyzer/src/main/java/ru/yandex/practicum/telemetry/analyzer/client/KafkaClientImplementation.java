@@ -15,7 +15,7 @@ import java.util.Properties;
 
 @Component
 @EnableConfigurationProperties({KafkaConsumerProperties.class})
-public class KafkaClientImplementation implements KafkaClient, AutoCloseable {
+public class KafkaClientImplementation implements KafkaClient {
     private final KafkaConsumerProperties kafkaConsumerProperties;
     private Consumer<String, HubEventAvro> hubEventsConsumer;
     private Consumer<String, SensorsSnapshotAvro> snapshotEventsConsumer;
@@ -69,7 +69,4 @@ public class KafkaClientImplementation implements KafkaClient, AutoCloseable {
 
         snapshotEventsConsumer = new KafkaConsumer<>(config);
     }
-
-    @Override
-    public void close() {}
 }
