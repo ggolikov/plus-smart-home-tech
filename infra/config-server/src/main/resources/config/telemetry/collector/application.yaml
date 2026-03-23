@@ -1,0 +1,14 @@
+grpc:
+  server:
+    port: 59091
+collector:
+  kafka:
+    producer:
+      properties:
+        bootstrap-servers: localhost:9092
+        acks: all
+        retries: 3
+kafka:
+  topic:
+    sensors: telemetry.sensors.v1
+    hubs: telemetry.hubs.v1
