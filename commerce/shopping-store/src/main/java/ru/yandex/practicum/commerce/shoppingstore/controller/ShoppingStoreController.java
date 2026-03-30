@@ -10,11 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.commerce.contract.shopping.store.ShoppingStoreOperations;
-import ru.yandex.practicum.commerce.dto.shopping.store.PageProductDto;
-import ru.yandex.practicum.commerce.dto.shopping.store.ProductCategory;
-import ru.yandex.practicum.commerce.dto.shopping.store.ProductDto;
-import ru.yandex.practicum.commerce.dto.shopping.store.SetProductQuantityStateRequest;
+import ru.yandex.practicum.commerce.dto.shopping.store.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,9 +28,9 @@ public class ShoppingStoreController {
     @GetMapping(value = "/api/v1/shopping-store", produces = MediaType.APPLICATION_JSON_VALUE)
     public PageProductDto getProducts(
             @RequestParam("category") ProductCategory category,
-            @RequestParam("page") int page,
-            @RequestParam("size") int size,
-            @RequestParam("sort") List<String> sort
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "sort", defaultValue = "") List<String> sort
     ) {
         return shoppingStore.getProducts(category, page, size, sort);
     }
@@ -66,10 +64,14 @@ public class ShoppingStoreController {
 
     @PostMapping(
             value = "/api/v1/shopping-store/quantityState",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
+//            consumes = MediaType.APPLICATION_JSON_VALUE
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public Boolean setProductQuantityState(@Valid @RequestBody SetProductQuantityStateRequest request) {
+    public Boolean setProductQuantityState(
+        @RequestParam("productId") UUID productId,
+        @RequestParam("quantityState") QuantityState quantityState
+    ) {
+        SetProductQuantityStateRequest request = new SetProductQuantityStateRequest(productId, quantityState);
         return shoppingStore.setProductQuantityState(request);
     }
 

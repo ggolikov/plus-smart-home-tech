@@ -7,12 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.commerce.contract.shopping.store.ShoppingStoreOperations;
-import ru.yandex.practicum.commerce.dto.shopping.store.PageProductDto;
-import ru.yandex.practicum.commerce.dto.shopping.store.PageableObject;
-import ru.yandex.practicum.commerce.dto.shopping.store.ProductCategory;
-import ru.yandex.practicum.commerce.dto.shopping.store.ProductDto;
-import ru.yandex.practicum.commerce.dto.shopping.store.SetProductQuantityStateRequest;
-import ru.yandex.practicum.commerce.dto.shopping.store.SortObject;
+import ru.yandex.practicum.commerce.dto.shopping.store.*;
 import ru.yandex.practicum.commerce.shoppingstore.repository.ProductRepository;
 import ru.yandex.practicum.commerce.shoppingstore.repository.entity.Product;
 
@@ -68,10 +63,11 @@ public class ShoppingStoreService implements ShoppingStoreOperations {
     @Override
     @Transactional
     public Boolean removeProductFromStore(UUID productId) {
-        if (!productRepository.existsById(productId)) {
-            throw new ProductNotFoundException(productId);
-        }
-        productRepository.deleteById(productId);
+        Product entity = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+        entity.setProductState(ProductState.DEACTIVATE);
+        ProductDto productDto = toDto(entity);
+        applyDto(entity, productDto);
         return Boolean.TRUE;
     }
 
@@ -98,18 +94,10 @@ public class ShoppingStoreService implements ShoppingStoreOperations {
             return Sort.unsorted();
         }
         List<Sort.Order> orders = new ArrayList<>();
-        for (String expression : sort) {
-            if (expression == null || expression.isBlank()) {
-                continue;
-            }
-            String[] parts = expression.split(",");
-            if (parts.length == 1) {
-                orders.add(Sort.Order.by(parts[0].trim()));
-            } else {
-                orders.add(new Sort.Order(Sort.Direction.fromString(parts[1].trim()), parts[0].trim()));
-            }
-        }
-        return orders.isEmpty() ? Sort.unsorted() : Sort.by(orders);
+
+        orders.add(new Sort.Order(Sort.Direction.fromString(sort.get(1).trim()), sort.get(0).trim()));
+
+        return Sort.by(orders);
     }
 
     private PageProductDto toPageProductDto(Page<Product> page) {
