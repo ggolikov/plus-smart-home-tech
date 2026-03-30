@@ -1,31 +1,15 @@
 spring:
   application:
     name: warehouse
+  config:
+    import: configserver:http://localhost:34735
   cloud:
     openfeign:
       enabled: false
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
-    driver-class-name: org.postgresql.Driver
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
-  jpa:
-    defer-datasource-initialization: true
-    hibernate:
-      ddl-auto: none
-    open-in-view: false
-    show-sql: false
-  sql:
-    init:
-      mode: always
-
-server:
-  port: 38081
-
-warehouse:
-  address:
-    country: Russia
-    city: Moscow
-    street: Skladskaya
-    house: "1"
-    flat:
+    discovery:
+      enabled: true
+      serviceId: config-server
+    fail-fast: true
+    retry:
+      useRandomPolicy: true
+      max-interval: 6000

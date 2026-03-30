@@ -1,27 +1,15 @@
 spring:
   application:
     name: shopping-store
+  config:
+    import: configserver:http://localhost:34735
   cloud:
     openfeign:
       enabled: false
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
-    driver-class-name: org.postgresql.Driver
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
-  jpa:
-    defer-datasource-initialization: true
-    hibernate:
-      ddl-auto: none
-      format_sql: true
-    open-in-view: false
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  sql:
-    init:
-      mode: always
-
-server:
-  port: 8080
+    discovery:
+      enabled: true
+      serviceId: config-server
+    fail-fast: true
+    retry:
+      useRandomPolicy: true
+      max-interval: 6000
