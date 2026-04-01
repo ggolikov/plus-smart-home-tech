@@ -2,7 +2,7 @@ spring:
   application:
     name: shopping-cart
   config:
-    import: configserver:http://localhost:34735
+    import: "configserver:"
   cloud:
     openfeign:
       enabled: false
