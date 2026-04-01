@@ -1,0 +1,21 @@
+grpc:
+  server:
+    port: 59092
+aggregator:
+  kafka:
+    producer:
+      properties:
+        bootstrapServers=localhost: 9092
+        acks: all
+        retries: 3
+        topic:
+          snapshots: telemetry.snapshots.v1
+      kafka:
+        topic:
+          snapshots: telemetry.snapshots.v1
+      consumer:
+        properties:
+          bootstrap-servers: localhost:9092
+          groupId: consumer-service-1
+          incomingTopic: telemetry.sensors.v1
+          outgoingTopic: telemetry.snapshots.v1
