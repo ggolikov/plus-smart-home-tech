@@ -4,6 +4,14 @@ spring:
   config:
     import: "configserver:"
   cloud:
+    config:
+      discovery:
+        enabled: true
+        serviceId: config-server
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
     openfeign:
       enabled: false
   datasource:
