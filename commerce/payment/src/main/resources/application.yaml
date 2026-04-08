@@ -1,6 +1,8 @@
 spring:
   application:
     name: payment
+  config:
+    import: "configserver:"
   cloud:
     openfeign:
       enabled: false
@@ -21,3 +23,8 @@ spring:
 
 server:
   port: 51887
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: order
+    name: delivery
   config:
     import: "configserver:"
   cloud:
@@ -22,7 +22,7 @@ spring:
       mode: always
 
 server:
-  port: 41723
+  port: 44989
 
 eureka:
   client:
