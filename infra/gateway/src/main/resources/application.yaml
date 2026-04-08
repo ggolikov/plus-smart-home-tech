@@ -2,7 +2,7 @@ spring:
   application:
     name: gateway
   config:
-    import: configserver:http://localhost:34735
+    import: "configserver:"
   cloud:
     config:
       # не загружать другие компоненты до получения конфигурации
@@ -25,3 +25,9 @@ eureka:
     hostname: localhost
     instance-id: "${spring.application.name}:${random.value}"
     leaseRenewalInternalInSeconds: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
