@@ -4,15 +4,14 @@ spring:
   config:
     import: "configserver:"
   cloud:
-    openfeign:
-      enabled: false
-    discovery:
-      enabled: true
-      serviceId: config-server
-    fail-fast: true
-    retry:
-      useRandomPolicy: true
-      max-interval: 6000
+    config:
+      discovery:
+        enabled: true
+        serviceId: config-server
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
 
   eureka:
     client:
