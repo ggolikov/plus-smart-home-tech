@@ -8,6 +8,7 @@ import ru.yandex.practicum.commerce.dto.order.OrderDto;
 import ru.yandex.practicum.commerce.dto.order.OrderState;
 import ru.yandex.practicum.commerce.dto.order.ProductReturnRequest;
 import ru.yandex.practicum.commerce.dto.warehouse.AddressDto;
+import ru.yandex.practicum.commerce.order.mapper.OrderMapper;
 import ru.yandex.practicum.commerce.order.repository.OrderRepository;
 import ru.yandex.practicum.commerce.order.repository.entity.OrderEntity;
 
@@ -34,7 +35,7 @@ public class OrderService implements OrderOperations {
     public List<OrderDto> getClientOrders(String username) {
         requireUsername(username);
         return orderRepository.findByUsernameOrderByCreatedAtDesc(username.trim()).stream()
-                .map(OrderService::toDto)
+                .map(OrderMapper::toDto)
                 .toList();
     }
 
@@ -56,7 +57,7 @@ public class OrderService implements OrderOperations {
         entity.setDeliveryWeight(0.0);
         entity.setDeliveryVolume(0.0);
         applyAddress(entity, request.deliveryAddress());
-        return toDto(orderRepository.save(entity));
+        return OrderMapper.toDto(orderRepository.save(entity));
     }
 
     @Override
@@ -88,7 +89,7 @@ public class OrderService implements OrderOperations {
             }
         }
         order.setState(OrderState.PRODUCT_RETURNED);
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -99,7 +100,7 @@ public class OrderService implements OrderOperations {
         if (order.getPaymentId() == null) {
             order.setPaymentId(UUID.randomUUID());
         }
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -107,7 +108,7 @@ public class OrderService implements OrderOperations {
     public OrderDto paymentFailed(UUID orderId) {
         OrderEntity order = requireOrder(orderId);
         order.setState(OrderState.PAYMENT_FAILED);
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -118,7 +119,7 @@ public class OrderService implements OrderOperations {
         if (order.getDeliveryId() == null) {
             order.setDeliveryId(UUID.randomUUID());
         }
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -126,7 +127,7 @@ public class OrderService implements OrderOperations {
     public OrderDto deliveryFailed(UUID orderId) {
         OrderEntity order = requireOrder(orderId);
         order.setState(OrderState.DELIVERY_FAILED);
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -134,7 +135,7 @@ public class OrderService implements OrderOperations {
     public OrderDto complete(UUID orderId) {
         OrderEntity order = requireOrder(orderId);
         order.setState(OrderState.COMPLETED);
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -147,7 +148,7 @@ public class OrderService implements OrderOperations {
         }
         order.setProductPrice(sum);
         applyTotal(order);
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -156,7 +157,7 @@ public class OrderService implements OrderOperations {
         OrderEntity order = requireOrder(orderId);
         order.setDeliveryPrice(STUB_DELIVERY_PRICE);
         applyTotal(order);
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -164,7 +165,7 @@ public class OrderService implements OrderOperations {
     public OrderDto assembly(UUID orderId) {
         OrderEntity order = requireOrder(orderId);
         order.setState(OrderState.ASSEMBLED);
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     @Override
@@ -172,7 +173,7 @@ public class OrderService implements OrderOperations {
     public OrderDto assemblyFailed(UUID orderId) {
         OrderEntity order = requireOrder(orderId);
         order.setState(OrderState.ASSEMBLY_FAILED);
-        return toDto(orderRepository.save(order));
+        return OrderMapper.toDto(orderRepository.save(order));
     }
 
     private OrderEntity requireOrder(UUID orderId) {
@@ -208,22 +209,5 @@ public class OrderService implements OrderOperations {
             return null;
         }
         return username.trim();
-    }
-
-    private static OrderDto toDto(OrderEntity entity) {
-        return new OrderDto(
-                entity.getOrderId(),
-                entity.getShoppingCartId(),
-                new HashMap<>(entity.getProducts()),
-                entity.getPaymentId(),
-                entity.getDeliveryId(),
-                entity.getState(),
-                entity.getDeliveryWeight(),
-                entity.getDeliveryVolume(),
-                entity.getFragile(),
-                entity.getTotalPrice(),
-                entity.getDeliveryPrice(),
-                entity.getProductPrice()
-        );
     }
 }

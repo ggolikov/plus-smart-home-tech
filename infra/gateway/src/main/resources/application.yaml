@@ -25,9 +25,3 @@ eureka:
     hostname: localhost
     instance-id: "${spring.application.name}:${random.value}"
     leaseRenewalInternalInSeconds: 10
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"

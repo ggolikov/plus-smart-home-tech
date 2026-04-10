@@ -7,6 +7,7 @@ import ru.yandex.practicum.commerce.dto.delivery.DeliveryDto;
 import ru.yandex.practicum.commerce.dto.delivery.DeliveryState;
 import ru.yandex.practicum.commerce.dto.order.OrderDto;
 import ru.yandex.practicum.commerce.dto.warehouse.AddressDto;
+import ru.yandex.practicum.commerce.delivery.mapper.DeliveryMapper;
 import ru.yandex.practicum.commerce.delivery.repository.DeliveryRepository;
 import ru.yandex.practicum.commerce.delivery.repository.entity.DeliveryEntity;
 
@@ -42,7 +43,7 @@ public class DeliveryService implements DeliveryOperations {
         entity.setState(delivery.deliveryState());
         entity.setEstimatedCost(estimateRouteCost(delivery));
 
-        return toDto(deliveryRepository.save(entity));
+        return DeliveryMapper.toDto(deliveryRepository.save(entity));
     }
 
     @Override
@@ -122,29 +123,5 @@ public class DeliveryService implements DeliveryOperations {
             target.setToHouse(to.house());
             target.setToFlat(to.flat());
         }
-    }
-
-    private static DeliveryDto toDto(DeliveryEntity entity) {
-        AddressDto from = new AddressDto(
-                entity.getFromCountry(),
-                entity.getFromCity(),
-                entity.getFromStreet(),
-                entity.getFromHouse(),
-                entity.getFromFlat()
-        );
-        AddressDto to = new AddressDto(
-                entity.getToCountry(),
-                entity.getToCity(),
-                entity.getToStreet(),
-                entity.getToHouse(),
-                entity.getToFlat()
-        );
-        return new DeliveryDto(
-                entity.getDeliveryId(),
-                from,
-                to,
-                entity.getOrderId(),
-                entity.getState()
-        );
     }
 }
